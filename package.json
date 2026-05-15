@@ -96,7 +96,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "prisma": "^6.19.3",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.19.2",
     "typescript": "^6.0.3",
