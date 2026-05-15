@@ -70,5 +70,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   // AUTH_URL env var pins the trusted host; trustHost: true is intentionally omitted.
-
 });

@@ -26,7 +26,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const initials = (user.name ?? user.email ?? "?").slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+    <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
       <div className="container flex h-14 items-center justify-between gap-4">
         <nav className="flex items-center gap-6">
           <Link href="/dashboard" className="font-semibold">
@@ -34,13 +34,13 @@ export function AppHeader({ user }: AppHeaderProps) {
           </Link>
           <Link
             href="/dashboard"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             ダッシュボード
           </Link>
           <Link
             href="/billing"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             請求
           </Link>
@@ -57,7 +57,7 @@ export function AppHeader({ user }: AppHeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <div className="px-2 py-1.5 text-sm">
               <p className="font-medium">{user.name ?? "—"}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="text-muted-foreground text-xs">{user.email}</p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

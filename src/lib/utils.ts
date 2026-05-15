@@ -5,11 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(
-  amount: number,
-  currency = "JPY",
-  locale = "ja-JP",
-): string {
+export function formatCurrency(amount: number, currency = "JPY", locale = "ja-JP"): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,

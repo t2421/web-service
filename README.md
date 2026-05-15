@@ -6,23 +6,23 @@
 
 ## 技術スタック
 
-| カテゴリ | 採用 |
-|--|--|
-| フレームワーク | Next.js 15 (App Router, TypeScript) |
-| UI | Tailwind CSS + shadcn/ui + Radix UI |
-| 状態管理 | TanStack Query (server) + Zustand (client) |
-| フォーム | React Hook Form + Zod |
-| ORM | Prisma |
-| DB | PostgreSQL (本番: Neon / Supabase / RDS) |
-| キャッシュ / レート制限 | Upstash Redis |
-| 認証 | Auth.js v5 (Resend / GitHub / Google) |
-| 決済 | Stripe (Checkout + Customer Portal + Webhook) |
-| メール | Resend + React Email |
-| エラー監視 | Sentry |
-| 分析 | PostHog |
-| デプロイ | Vercel |
-| CI | GitHub Actions |
-| テスト | Vitest + Testing Library + Playwright |
+| カテゴリ                | 採用                                          |
+| ----------------------- | --------------------------------------------- |
+| フレームワーク          | Next.js 15 (App Router, TypeScript)           |
+| UI                      | Tailwind CSS + shadcn/ui + Radix UI           |
+| 状態管理                | TanStack Query (server) + Zustand (client)    |
+| フォーム                | React Hook Form + Zod                         |
+| ORM                     | Prisma                                        |
+| DB                      | PostgreSQL (本番: Neon / Supabase / RDS)      |
+| キャッシュ / レート制限 | Upstash Redis                                 |
+| 認証                    | Auth.js v5 (Resend / GitHub / Google)         |
+| 決済                    | Stripe (Checkout + Customer Portal + Webhook) |
+| メール                  | Resend + React Email                          |
+| エラー監視              | Sentry                                        |
+| 分析                    | PostHog                                       |
+| デプロイ                | Vercel                                        |
+| CI                      | GitHub Actions                                |
+| テスト                  | Vitest + Testing Library + Playwright         |
 
 ## 必要環境
 
@@ -83,21 +83,21 @@ tests/
 
 ## よく使うコマンド
 
-| コマンド | 説明 |
-|--|--|
-| `pnpm dev` | Turbopack 開発サーバー |
-| `pnpm build` | 本番ビルド |
-| `pnpm typecheck` | 型チェック |
-| `pnpm lint` | ESLint |
-| `pnpm format` | Prettier |
-| `pnpm test` | Vitest 単体テスト |
+| コマンド             | 説明                      |
+| -------------------- | ------------------------- |
+| `pnpm dev`           | Turbopack 開発サーバー    |
+| `pnpm build`         | 本番ビルド                |
+| `pnpm typecheck`     | 型チェック                |
+| `pnpm lint`          | ESLint                    |
+| `pnpm format`        | Prettier                  |
+| `pnpm test`          | Vitest 単体テスト         |
 | `pnpm test:coverage` | カバレッジ計測 (閾値 80%) |
-| `pnpm test:e2e` | Playwright |
-| `pnpm db:studio` | Prisma Studio |
-| `pnpm db:migrate` | マイグレーション (dev) |
-| `pnpm db:seed` | シードデータ投入 |
-| `pnpm email:dev` | React Email プレビュー |
-| `pnpm stripe:listen` | Stripe webhook 転送 |
+| `pnpm test:e2e`      | Playwright                |
+| `pnpm db:studio`     | Prisma Studio             |
+| `pnpm db:migrate`    | マイグレーション (dev)    |
+| `pnpm db:seed`       | シードデータ投入          |
+| `pnpm email:dev`     | React Email プレビュー    |
+| `pnpm stripe:listen` | Stripe webhook 転送       |
 
 ## デプロイ
 

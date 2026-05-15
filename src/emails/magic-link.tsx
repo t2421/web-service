@@ -23,8 +23,7 @@ export function MagicLinkEmail({ url }: MagicLinkEmailProps) {
         <Container style={container}>
           <Heading style={h1}>サインイン</Heading>
           <Text style={text}>
-            下のボタンをクリックしてアプリにサインインしてください。リンクの有効期限は 24
-            時間です。
+            下のボタンをクリックしてアプリにサインインしてください。リンクの有効期限は 24 時間です。
           </Text>
           <Section style={{ textAlign: "center", margin: "24px 0" }}>
             <Button style={button} href={url}>

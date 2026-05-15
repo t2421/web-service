@@ -19,9 +19,11 @@
 ## 1. データベース (PostgreSQL)
 
 ### ローカル
+
 - [ ] `pnpm docker:up` で `postgres:16` が起動します。`.env` の `DATABASE_URL` は既定値のままで動作します。
 
 ### 本番 — Neon を推奨
+
 - [ ] https://neon.tech にサインアップ
 - [ ] プロジェクト作成 → リージョン: `Tokyo (ap-northeast-1)` 推奨
 - [ ] **Connection string (pooled)** を取得 → `DATABASE_URL` に設定
@@ -48,15 +50,18 @@
 ## 3. 認証 (Auth.js)
 
 ### 必須
+
 - [ ] シークレットを生成して `AUTH_SECRET` に設定:
   ```bash
   openssl rand -base64 32
   ```
 
 ### Magic Link (Resend) ← デフォルトの推奨
+
 - 「4. メール (Resend)」を完了すれば自動で有効化されます。
 
 ### Google OAuth — 任意
+
 - [ ] https://console.cloud.google.com/ で新規プロジェクト作成
 - [ ] **OAuth consent screen** を構成（外部, スコープは email/profile）
 - [ ] **Credentials → Create OAuth client → Web application**
@@ -68,6 +73,7 @@
   - `AUTH_GOOGLE_SECRET`
 
 ### GitHub OAuth — 任意
+
 - [ ] https://github.com/settings/developers → **New OAuth App**
 - [ ] Homepage URL: `https://<本番ドメイン>`（ローカル開発は `http://localhost:3000`）
 - [ ] Authorization callback URL:
@@ -93,6 +99,7 @@
 ## 5. 決済 (Stripe)
 
 ### Stripe ダッシュボード
+
 - [ ] https://dashboard.stripe.com にサインアップ
 - [ ] **テストモード**で進める
 - [ ] **Developers → API keys**:
@@ -100,6 +107,7 @@
   - **Secret key** → `STRIPE_SECRET_KEY`
 
 ### 商品と価格
+
 - [ ] **Products → Add product**: Pro プラン作成
   - 月額用と年額用の 2 価格を作成
 - [ ] 各 Price の `price_xxx` を取得し、`.env` に設定:
@@ -107,6 +115,7 @@
   - `STRIPE_PRICE_ID_PRO_YEARLY`
 
 ### Webhook
+
 - [ ] **ローカル開発**: Stripe CLI をインストールし、別ターミナルで
   ```bash
   stripe login
@@ -124,6 +133,7 @@
   - 取得した署名シークレットを Vercel の `STRIPE_WEBHOOK_SECRET` に設定
 
 ### Customer Portal
+
 - [ ] Dashboard → **Settings → Billing → Customer portal** を有効化
 - [ ] 解約・プラン変更などの許可項目を設定
 
@@ -218,21 +228,21 @@ NEXT_PUBLIC_POSTHOG_HOST=
 
 ## 必要情報まとめ (この一覧をユーザーが埋める)
 
-| キー | 取得元 | 必須/任意 | 値 |
-|--|--|--|--|
-| `DATABASE_URL` | Neon / Supabase | 必須 | |
-| `DIRECT_URL` | Neon / Supabase | 必須 | |
-| `AUTH_SECRET` | `openssl rand -base64 32` | 必須 | |
-| `AUTH_GOOGLE_ID` / `SECRET` | Google Cloud | 任意 | |
-| `AUTH_GITHUB_ID` / `SECRET` | GitHub OAuth Apps | 任意 | |
-| `RESEND_API_KEY` | Resend | 推奨 | |
-| `EMAIL_FROM` | 自前ドメイン | 推奨 | |
-| `STRIPE_SECRET_KEY` | Stripe | 課金時必須 | |
-| `STRIPE_WEBHOOK_SECRET` | Stripe Webhook | 課金時必須 | |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe | 課金時必須 | |
-| `STRIPE_PRICE_ID_PRO_MONTHLY` | Stripe Product | 課金時必須 | |
-| `STRIPE_PRICE_ID_PRO_YEARLY` | Stripe Product | 課金時必須 | |
-| `UPSTASH_REDIS_REST_URL` / `TOKEN` | Upstash | 任意 | |
-| `NEXT_PUBLIC_SENTRY_DSN` ほか | Sentry | 任意 | |
-| `NEXT_PUBLIC_POSTHOG_KEY` ほか | PostHog | 任意 | |
-| Vercel デプロイ | Vercel | 本番時必須 | |
+| キー                                 | 取得元                    | 必須/任意  | 値  |
+| ------------------------------------ | ------------------------- | ---------- | --- |
+| `DATABASE_URL`                       | Neon / Supabase           | 必須       |     |
+| `DIRECT_URL`                         | Neon / Supabase           | 必須       |     |
+| `AUTH_SECRET`                        | `openssl rand -base64 32` | 必須       |     |
+| `AUTH_GOOGLE_ID` / `SECRET`          | Google Cloud              | 任意       |     |
+| `AUTH_GITHUB_ID` / `SECRET`          | GitHub OAuth Apps         | 任意       |     |
+| `RESEND_API_KEY`                     | Resend                    | 推奨       |     |
+| `EMAIL_FROM`                         | 自前ドメイン              | 推奨       |     |
+| `STRIPE_SECRET_KEY`                  | Stripe                    | 課金時必須 |     |
+| `STRIPE_WEBHOOK_SECRET`              | Stripe Webhook            | 課金時必須 |     |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe                    | 課金時必須 |     |
+| `STRIPE_PRICE_ID_PRO_MONTHLY`        | Stripe Product            | 課金時必須 |     |
+| `STRIPE_PRICE_ID_PRO_YEARLY`         | Stripe Product            | 課金時必須 |     |
+| `UPSTASH_REDIS_REST_URL` / `TOKEN`   | Upstash                   | 任意       |     |
+| `NEXT_PUBLIC_SENTRY_DSN` ほか        | Sentry                    | 任意       |     |
+| `NEXT_PUBLIC_POSTHOG_KEY` ほか       | PostHog                   | 任意       |     |
+| Vercel デプロイ                      | Vercel                    | 本番時必須 |     |

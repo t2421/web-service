@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
-        className={`${inter.variable} min-h-screen bg-background font-sans`}
+        className={`${inter.variable} bg-background min-h-screen font-sans`}
         suppressHydrationWarning
       >
         <Providers>

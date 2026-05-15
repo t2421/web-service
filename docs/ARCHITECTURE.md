@@ -10,11 +10,11 @@
 
 ## レイヤ責務
 
-| レイヤ | ディレクトリ | 役割 |
-|--|--|--|
-| Presentation | `src/app/**`, `src/components/**` | UI / Router / RSC |
-| Application | `src/server/actions/**` | Server Actions / 入力検証 / 認可 |
-| Domain | `src/server/services/**` | ビジネスロジック |
+| レイヤ         | ディレクトリ                               | 役割                                  |
+| -------------- | ------------------------------------------ | ------------------------------------- |
+| Presentation   | `src/app/**`, `src/components/**`          | UI / Router / RSC                     |
+| Application    | `src/server/actions/**`                    | Server Actions / 入力検証 / 認可      |
+| Domain         | `src/server/services/**`                   | ビジネスロジック                      |
 | Infrastructure | `src/server/repositories/**`, `src/lib/**` | Prisma / Stripe / Resend など外部依存 |
 
 ## ランタイム
@@ -55,10 +55,10 @@
 
 ## スケーリングの考え方
 
-| 規模 | 構成 |
-|--|--|
-| ~10 RPS | Vercel + Neon Free + Resend + Stripe |
-| ~100 RPS | Vercel Pro + Neon Pro + Upstash + Sentry |
+| 規模     | 構成                                                                   |
+| -------- | ---------------------------------------------------------------------- |
+| ~10 RPS  | Vercel + Neon Free + Resend + Stripe                                   |
+| ~100 RPS | Vercel Pro + Neon Pro + Upstash + Sentry                               |
 | 100+ RPS | DB の read replica、CDN キャッシュ、ジョブキュー (Inngest/Trigger.dev) |
 
 ## 今後足す候補

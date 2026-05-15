@@ -53,9 +53,9 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
 
   if (isActive) {
     return (
-      <div className="rounded-lg border bg-card p-6">
+      <div className="bg-card rounded-lg border p-6">
         <p className="font-medium">Pro プランがアクティブです</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm">
           次回更新: {subscription?.currentPeriodEnd?.toLocaleDateString("ja-JP")}
         </p>
         <Button onClick={handlePortal} disabled={pending} className="mt-4">
@@ -67,16 +67,16 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border bg-card p-6">
+      <div className="bg-card rounded-lg border p-6">
         <p className="text-lg font-semibold">Pro 月額</p>
-        <p className="mt-1 text-sm text-muted-foreground">月単位で柔軟に</p>
+        <p className="text-muted-foreground mt-1 text-sm">月単位で柔軟に</p>
         <Button onClick={() => handleCheckout("monthly")} disabled={pending} className="mt-4">
           アップグレード
         </Button>
       </div>
-      <div className="rounded-lg border bg-card p-6">
+      <div className="bg-card rounded-lg border p-6">
         <p className="text-lg font-semibold">Pro 年額</p>
-        <p className="mt-1 text-sm text-muted-foreground">2 ヶ月分お得</p>
+        <p className="text-muted-foreground mt-1 text-sm">2 ヶ月分お得</p>
         <Button onClick={() => handleCheckout("yearly")} disabled={pending} className="mt-4">
           アップグレード
         </Button>

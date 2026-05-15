@@ -12,16 +12,16 @@ export default async function DashboardPage() {
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">アクティブユーザー</p>
+        <div className="bg-card rounded-lg border p-6">
+          <p className="text-muted-foreground text-sm">アクティブユーザー</p>
           <p className="mt-2 text-3xl font-bold">—</p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">今月の売上</p>
+        <div className="bg-card rounded-lg border p-6">
+          <p className="text-muted-foreground text-sm">今月の売上</p>
           <p className="mt-2 text-3xl font-bold">—</p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">プラン</p>
+        <div className="bg-card rounded-lg border p-6">
+          <p className="text-muted-foreground text-sm">プラン</p>
           <p className="mt-2 text-3xl font-bold">Free</p>
         </div>
       </div>
