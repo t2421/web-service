@@ -23,7 +23,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           GitHub({
             clientId: env.AUTH_GITHUB_ID,
             clientSecret: env.AUTH_GITHUB_SECRET,
-            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -32,7 +31,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           Google({
             clientId: env.AUTH_GOOGLE_ID,
             clientSecret: env.AUTH_GOOGLE_SECRET,
-            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -71,5 +69,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  trustHost: true,
+  // AUTH_URL env var pins the trusted host; trustHost: true is intentionally omitted.
+
 });

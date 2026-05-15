@@ -10,7 +10,11 @@ const from = env.EMAIL_FROM ?? "noreply@example.com";
 
 export async function sendMagicLinkEmail({ to, url }: { to: string; url: string }) {
   if (!resend) {
-    console.warn("[email] RESEND_API_KEY not set. Magic link:", url);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[email] RESEND_API_KEY not set. Magic link URL logged for local dev:", url);
+    } else {
+      console.warn("[email] RESEND_API_KEY not set. Skipping magic-link send.");
+    }
     return;
   }
   const { error } = await resend.emails.send({

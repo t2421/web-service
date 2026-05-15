@@ -1,12 +1,35 @@
 "use server";
 
+import { headers } from "next/headers";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { z } from "zod";
 import { signIn } from "@/lib/auth";
 import { AuthError } from "next-auth";
+import { createRateLimiter } from "@/lib/redis";
+
+const emailRateLimiter = createRateLimiter({ requests: 5, window: "15 m", prefix: "auth:email" });
+const oauthRateLimiter = createRateLimiter({ requests: 10, window: "15 m", prefix: "auth:oauth" });
+const emailSchema = z.string().email().max(254);
 
 type ActionResult = { success: true } | { success: false; error: string };
 
-export async function signInWithEmail(email: string): Promise<ActionResult> {
+async function getIp(): Promise<string> {
+  const h = await headers();
+  return h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+}
+
+export async function signInWithEmail(rawEmail: string): Promise<ActionResult> {
+  const parsed = emailSchema.safeParse(rawEmail);
+  if (!parsed.success) {
+    return { success: false, error: "有効なメールアドレスを入力してください。" };
+  }
+  const email = parsed.data;
+
+  const { success: rateOk } = await emailRateLimiter.limit(await getIp());
+  if (!rateOk) {
+    return { success: false, error: "しばらく後にお試しください。" };
+  }
+
   try {
     await signIn("resend", { email, redirectTo: "/account" });
     return { success: true };
@@ -30,6 +53,11 @@ export async function signInWithEmail(email: string): Promise<ActionResult> {
 }
 
 export async function signInWithOAuth(provider: "github" | "google"): Promise<ActionResult> {
+  const { success: rateOk } = await oauthRateLimiter.limit(await getIp());
+  if (!rateOk) {
+    return { success: false, error: "しばらく後にお試しください。" };
+  }
+
   try {
     await signIn(provider, { redirectTo: "/account" });
     return { success: true };

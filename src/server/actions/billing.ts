@@ -1,17 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { STRIPE_PRICES, requireStripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
 
-export async function createCheckoutSession({
-  plan,
-}: {
-  plan: "monthly" | "yearly";
-}) {
+const planSchema = z.object({ plan: z.enum(["monthly", "yearly"]) });
+
+export async function createCheckoutSession(input: { plan: "monthly" | "yearly" }) {
+  const { plan } = planSchema.parse(input);
   const session = await auth();
   if (!session?.user?.id || !session.user.email) {
     return { error: "Unauthorized" } as const;

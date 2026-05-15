@@ -16,11 +16,23 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
   const [pending, startTransition] = useTransition();
   const isActive = subscription?.status === "active" || subscription?.status === "trialing";
 
+  function toSafeStripeUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    try {
+      const { origin } = new URL(url);
+      const allowed = ["https://checkout.stripe.com", "https://billing.stripe.com"];
+      return allowed.includes(origin) ? url : null;
+    } catch {
+      return null;
+    }
+  }
+
   function handleCheckout(plan: "monthly" | "yearly") {
     startTransition(async () => {
       const result = await createCheckoutSession({ plan });
-      if (result?.url) {
-        window.location.href = result.url;
+      const url = toSafeStripeUrl("url" in result ? result.url : null);
+      if (url) {
+        window.location.href = url;
       } else {
         toast.error("Checkout URL を作成できませんでした");
       }
@@ -30,8 +42,9 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
   function handlePortal() {
     startTransition(async () => {
       const result = await createPortalSession();
-      if (result?.url) {
-        window.location.href = result.url;
+      const url = toSafeStripeUrl("url" in result ? result.url : null);
+      if (url) {
+        window.location.href = url;
       } else {
         toast.error("ポータルを開けませんでした");
       }
