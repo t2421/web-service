@@ -1,0 +1,9 @@
+# 簡易 conventional commit チェック
+COMMIT_MSG=$(cat "$1")
+PATTERN='^(feat|fix|refactor|docs|test|chore|perf|ci|build|revert|style)(\([a-z0-9-]+\))?!?: .{1,80}'
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo "❌ コミットメッセージは Conventional Commits 形式に従ってください"
+  echo "   例: feat: add billing portal"
+  echo "       fix(auth): handle expired token"
+  exit 1
+fi

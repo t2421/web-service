@@ -1,0 +1,129 @@
+// Prisma schema for the SaaS starter
+// 詳細: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================
+// Auth.js models (JWT session strategy — Session table not needed)
+// =============================================================
+
+model User {
+  id              String         @id @default(cuid())
+  name            String?
+  email           String         @unique
+  emailVerified   DateTime?
+  image           String?
+  role            UserRole       @default(USER)
+  stripeCustomerId String?       @unique @map("stripe_customer_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  accounts        Account[]
+  subscription    Subscription?
+  authenticators  Authenticator[]
+
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Authenticator {
+  credentialID         String  @unique @map("credential_id")
+  userId               String  @map("user_id")
+  providerAccountId    String  @map("provider_account_id")
+  credentialPublicKey  String  @map("credential_public_key")
+  counter              Int
+  credentialDeviceType String  @map("credential_device_type")
+  credentialBackedUp   Boolean @map("credential_backed_up")
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+  @@map("authenticators")
+}
+
+// =============================================================
+// Domain models
+// =============================================================
+
+model Subscription {
+  id                   String              @id @default(cuid())
+  userId               String              @unique @map("user_id")
+  stripeSubscriptionId String              @unique @map("stripe_subscription_id")
+  status               SubscriptionStatus
+  priceId              String?             @map("price_id")
+  currentPeriodEnd     DateTime?           @map("current_period_end")
+  cancelAtPeriodEnd    Boolean             @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  incomplete
+  incomplete_expired
+  past_due
+  paused
+  trialing
+  unpaid
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
