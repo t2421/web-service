@@ -6,16 +6,16 @@
 
 予防対象として想定する代表的なサプライチェーン攻撃:
 
-| 攻撃                                  | 概要                                                                 | このリポジトリでの対策                                   |
-| ------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- |
-| 悪性 postinstall スクリプト           | 依存パッケージの `postinstall` がトークンや `.env` を抜き出す       | `pnpm.onlyBuiltDependencies` でスクリプト実行を allowlist 化 |
-| 直近公開された悪性バージョン          | 著名パッケージが乗っ取られ、直後に悪性版が publish される           | `.npmrc` の `minimum-release-age=10080`（公開 7 日未満を拒否） |
-| Typosquatting                         | `lodahs` などタイポを狙った偽パッケージの混入                        | Dependabot を minor/patch 単位に絞り PR レビュー必須化 |
-| Lockfile poisoning                    | `package.json` を変えずに `pnpm-lock.yaml` だけで悪性版を固定        | pre-commit / CI で「lock のみ変更」を検出して拒否       |
-| Compromised maintainer / hijack       | 既存パッケージが乗っ取られ既知バージョンが書き換わる                 | `verify-store-integrity` + `--frozen-lockfile`           |
-| Registry confusion                    | 内部スコープ名と同名の公開パッケージを優先解決                       | `.npmrc` で公開レジストリを単一指定                      |
-| 依存の既知脆弱性 (CVE)                | 既知脆弱性が放置されたまま本番に乗る                                 | `pnpm audit` を CI と日次 cron で実行                    |
-| 悪性 GitHub Action                    | サードパーティ Action がトークンを抜く                               | Dependabot で actions を監視（v6 以降タグも追跡）        |
+| 攻撃                            | 概要                                                          | このリポジトリでの対策                                         |
+| ------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
+| 悪性 postinstall スクリプト     | 依存パッケージの `postinstall` がトークンや `.env` を抜き出す | `pnpm.onlyBuiltDependencies` でスクリプト実行を allowlist 化   |
+| 直近公開された悪性バージョン    | 著名パッケージが乗っ取られ、直後に悪性版が publish される     | `.npmrc` の `minimum-release-age=10080`（公開 7 日未満を拒否） |
+| Typosquatting                   | `lodahs` などタイポを狙った偽パッケージの混入                 | Dependabot を minor/patch 単位に絞り PR レビュー必須化         |
+| Lockfile poisoning              | `package.json` を変えずに `pnpm-lock.yaml` だけで悪性版を固定 | pre-commit / CI で「lock のみ変更」を検出して拒否              |
+| Compromised maintainer / hijack | 既存パッケージが乗っ取られ既知バージョンが書き換わる          | `verify-store-integrity` + `--frozen-lockfile`                 |
+| Registry confusion              | 内部スコープ名と同名の公開パッケージを優先解決                | `.npmrc` で公開レジストリを単一指定                            |
+| 依存の既知脆弱性 (CVE)          | 既知脆弱性が放置されたまま本番に乗る                          | `pnpm audit` を CI と日次 cron で実行                          |
+| 悪性 GitHub Action              | サードパーティ Action がトークンを抜く                        | Dependabot で actions を監視（v6 以降タグも追跡）              |
 
 ## 実装
 
@@ -42,12 +42,12 @@
 
 ### 3. CI (`.github/workflows/security.yml`)
 
-| ジョブ                | トリガ                | 内容                                                              |
-| --------------------- | --------------------- | ----------------------------------------------------------------- |
-| `audit`               | push / PR / 毎日 06:00 UTC | `pnpm audit --prod --audit-level=high` で本番依存をブロック     |
-| `dependency-review`   | PR                    | GitHub 純正 Action で追加依存をシビアリティ / ライセンス検証      |
-| `lockfile-integrity`  | push / PR             | `--frozen-lockfile --ignore-scripts` で lock の完全性を検査       |
-| `scorecard`           | push / 日次           | OpenSSF Scorecard でリポジトリ自体の運用品質を点検                |
+| ジョブ               | トリガ                     | 内容                                                         |
+| -------------------- | -------------------------- | ------------------------------------------------------------ |
+| `audit`              | push / PR / 毎日 06:00 UTC | `pnpm audit --prod --audit-level=high` で本番依存をブロック  |
+| `dependency-review`  | PR                         | GitHub 純正 Action で追加依存をシビアリティ / ライセンス検証 |
+| `lockfile-integrity` | push / PR                  | `--frozen-lockfile --ignore-scripts` で lock の完全性を検査  |
+| `scorecard`          | push / 日次                | OpenSSF Scorecard でリポジトリ自体の運用品質を点検           |
 
 `audit` ジョブは **`--ignore-scripts` で install** することで、監査時に悪性スクリプトが副作用を起こさないようにしている。
 
