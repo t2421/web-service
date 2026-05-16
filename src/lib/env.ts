@@ -71,9 +71,20 @@ const processEnv = {
 
 const isServer = typeof window === "undefined";
 
-const parsed = isServer
-  ? serverSchema.merge(clientSchema).safeParse(processEnv)
-  : clientSchema.safeParse(processEnv);
+// Skip strict validation during `next build`'s page-data collection. Build runners
+// (Vercel preview, CI without secrets) don't always have runtime credentials, but
+// they only need to compile and inspect route shapes — they never serve requests.
+// The first real request triggers validation in the serverless function's cold
+// start, which still gives us fail-fast behavior in production.
+// Explicit `SKIP_ENV_VALIDATION=1` is also honoured for forced opt-out.
+const skipValidation =
+  process.env.SKIP_ENV_VALIDATION === "1" || process.env.NEXT_PHASE === "phase-production-build";
+
+const parsed = skipValidation
+  ? { success: true as const, data: processEnv }
+  : isServer
+    ? serverSchema.merge(clientSchema).safeParse(processEnv)
+    : clientSchema.safeParse(processEnv);
 
 if (!parsed.success) {
   console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
