@@ -2,8 +2,8 @@
 
 import { useTransition, useState } from "react";
 import { toast } from "sonner";
-import { signIn } from "next-auth/webauthn";
 
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +58,7 @@ export function SignInForm() {
   function handlePasskey() {
     startPasskeyTransition(async () => {
       try {
-        await signIn("webauthn", { callbackUrl: "/account", action: "authenticate" });
+        await authClient.authenticateWithPasskey({ callbackUrl: "/account" });
       } catch {
         toast.error("パスキー認証に失敗しました。");
       }
