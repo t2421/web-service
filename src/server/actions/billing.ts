@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -7,8 +8,26 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { STRIPE_PRICES, requireStripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
+import {
+  DEFAULT_MOCK_USER,
+  MOCK_SESSION_COOKIE,
+  isMockModeEnabled,
+  parseMockUser,
+  serializeMockUser,
+} from "@/lib/mock-mode";
 
 const planSchema = z.object({ plan: z.enum(["monthly", "yearly"]) });
+
+async function setMockSubscription(state: "free" | "active") {
+  const store = await cookies();
+  const current = parseMockUser(store.get(MOCK_SESSION_COOKIE)?.value) ?? DEFAULT_MOCK_USER;
+  store.set(MOCK_SESSION_COOKIE, serializeMockUser({ ...current, subscription: state }), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24,
+  });
+}
 
 export async function createCheckoutSession(input: { plan: "monthly" | "yearly" }) {
   const { plan } = planSchema.parse(input);
@@ -16,6 +35,13 @@ export async function createCheckoutSession(input: { plan: "monthly" | "yearly" 
   if (!session?.user?.id || !session.user.email) {
     return { error: "Unauthorized" } as const;
   }
+
+  if (isMockModeEnabled()) {
+    await setMockSubscription("active");
+    revalidatePath("/billing");
+    return { url: "/billing?status=mock-success" } as const;
+  }
+
   const priceId = STRIPE_PRICES[plan];
   if (!priceId) {
     return { error: "Plan not configured" } as const;
@@ -55,6 +81,12 @@ export async function createCheckoutSession(input: { plan: "monthly" | "yearly" 
 export async function createPortalSession() {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" } as const;
+
+  if (isMockModeEnabled()) {
+    await setMockSubscription("free");
+    revalidatePath("/billing");
+    return { url: "/billing?status=mock-portal" } as const;
+  }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user?.stripeCustomerId) return { error: "No customer" } as const;

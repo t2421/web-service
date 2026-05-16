@@ -16,8 +16,10 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
   const [pending, startTransition] = useTransition();
   const isActive = subscription?.status === "active" || subscription?.status === "trialing";
 
-  function toSafeStripeUrl(url: string | null | undefined): string | null {
+  function toSafeRedirect(url: string | null | undefined): string | null {
     if (!url) return null;
+    // Same-origin relative paths are intrinsically safe (used by the E2E mock mode).
+    if (url.startsWith("/") && !url.startsWith("//")) return url;
     try {
       const { origin } = new URL(url);
       const allowed = ["https://checkout.stripe.com", "https://billing.stripe.com"];
@@ -30,7 +32,7 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
   function handleCheckout(plan: "monthly" | "yearly") {
     startTransition(async () => {
       const result = await createCheckoutSession({ plan });
-      const url = toSafeStripeUrl("url" in result ? result.url : null);
+      const url = toSafeRedirect("url" in result ? result.url : null);
       if (url) {
         window.location.href = url;
       } else {
@@ -42,7 +44,7 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
   function handlePortal() {
     startTransition(async () => {
       const result = await createPortalSession();
-      const url = toSafeStripeUrl("url" in result ? result.url : null);
+      const url = toSafeRedirect("url" in result ? result.url : null);
       if (url) {
         window.location.href = url;
       } else {

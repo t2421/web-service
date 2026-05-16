@@ -104,6 +104,8 @@ jobs:
       DIRECT_URL: postgresql://postgres:postgres@localhost:5432/app_e2e?schema=public
       AUTH_SECRET: test_secret_at_least_32_characters_long_xxxx
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      # Bypass OAuth/Email/Stripe/DB-backed auth in CI E2E. Never set this in real production.
+      E2E_MOCK_MODE: "1"
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
