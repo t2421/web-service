@@ -38,8 +38,12 @@ export function isMockModeEnabled(): boolean {
 
 export function parseMockUser(raw: string | undefined): MockUser | null {
   if (!raw) return null;
+  // Cookie values come pre-decoded from `cookies().get(...)?.value`, so the
+  // payload should already be the original JSON. We keep a defensive fallback
+  // for legacy URL-encoded values stored by older code.
   try {
-    const decoded = JSON.parse(decodeURIComponent(raw)) as unknown;
+    const text = raw.startsWith("{") ? raw : decodeURIComponent(raw);
+    const decoded = JSON.parse(text) as unknown;
     if (!decoded || typeof decoded !== "object") return null;
     return { ...DEFAULT_MOCK_USER, ...(decoded as Partial<MockUser>) };
   } catch {
@@ -48,7 +52,8 @@ export function parseMockUser(raw: string | undefined): MockUser | null {
 }
 
 export function serializeMockUser(user: MockUser): string {
-  return encodeURIComponent(JSON.stringify(user));
+  // Cookie middleware URL-encodes on its own; store raw JSON.
+  return JSON.stringify(user);
 }
 
 export function mockSessionFromUser(user: MockUser): Session {

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { container } from "@/server/container";
 import { AccountForm } from "@/components/account/account-form";
 
 export const metadata = {
@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 export default async function AccountPage() {
-  const session = await auth();
+  const session = await container().sessions.getSession();
   if (!session?.user) return null;
 
   return (

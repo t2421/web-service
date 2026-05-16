@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import {
@@ -58,9 +59,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const cookieHeader = req.headers.get("cookie") ?? "";
-  const match = cookieHeader.split(/;\s*/).find((c) => c.startsWith(`${MOCK_SESSION_COOKIE}=`));
-  const current = parseMockUser(match?.split("=")[1]) ?? DEFAULT_MOCK_USER;
+  const store = await cookies();
+  const current = parseMockUser(store.get(MOCK_SESSION_COOKIE)?.value) ?? DEFAULT_MOCK_USER;
   const next: MockUser = { ...current, ...patch };
 
   const response = NextResponse.json({ user: next });

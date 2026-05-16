@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import NextAuth, { type Session } from "next-auth";
+import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
@@ -10,14 +9,12 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendMagicLinkEmail } from "@/lib/email";
 import { authConfig } from "@/lib/auth.config";
-import {
-  MOCK_SESSION_COOKIE,
-  isMockModeEnabled,
-  mockSessionFromUser,
-  parseMockUser,
-} from "@/lib/mock-mode";
 
-const nextAuth = NextAuth({
+// Bare NextAuth instance. Application code should NOT call `auth()` directly —
+// it goes through `container().sessions` so the E2E mock can substitute it.
+// `handlers` and `signIn` are exported because route handlers and the SignInGateway
+// adapter need direct access.
+export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   // JWT strategy: Edge middleware verifies sessions from the signed cookie without DB access.
@@ -78,17 +75,3 @@ const nextAuth = NextAuth({
   },
   // AUTH_URL env var pins the trusted host; trustHost: true is intentionally omitted.
 });
-
-export const { handlers, signIn, signOut } = nextAuth;
-const nextAuthSession = nextAuth.auth;
-
-// Server-side session accessor. In mock mode the __e2e_mock_user cookie short-circuits
-// NextAuth so Playwright tests don't need OAuth / email / DB-backed sign-in.
-export async function auth(): Promise<Session | null> {
-  if (isMockModeEnabled()) {
-    const store = await cookies();
-    const mockUser = parseMockUser(store.get(MOCK_SESSION_COOKIE)?.value);
-    if (mockUser) return mockSessionFromUser(mockUser);
-  }
-  return nextAuthSession();
-}

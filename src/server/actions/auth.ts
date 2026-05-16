@@ -2,14 +2,11 @@
 
 import { headers } from "next/headers";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { z } from "zod";
-import { signIn } from "@/lib/auth";
 import { AuthError } from "next-auth";
-import { createRateLimiter } from "@/lib/redis";
 
-const emailRateLimiter = createRateLimiter({ requests: 5, window: "15 m", prefix: "auth:email" });
-const oauthRateLimiter = createRateLimiter({ requests: 10, window: "15 m", prefix: "auth:oauth" });
-const emailSchema = z.string().email().max(254);
+import { container } from "@/server/container";
+import { AppError, RateLimitedError, UnauthorizedError } from "@/server/domain/errors";
+import { InvalidEmailError } from "@/server/services/auth-service";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -18,56 +15,56 @@ async function getIp(): Promise<string> {
   return h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
 }
 
-export async function signInWithEmail(rawEmail: string): Promise<ActionResult> {
-  const parsed = emailSchema.safeParse(rawEmail);
-  if (!parsed.success) {
+function toResult(error: unknown): ActionResult {
+  if (error instanceof InvalidEmailError) {
     return { success: false, error: "有効なメールアドレスを入力してください。" };
   }
-  const email = parsed.data;
-
-  const { success: rateOk } = await emailRateLimiter.limit(await getIp());
-  if (!rateOk) {
+  if (error instanceof RateLimitedError) {
     return { success: false, error: "しばらく後にお試しください。" };
   }
+  if (error instanceof UnauthorizedError) {
+    return { success: false, error: "認証が必要です。" };
+  }
+  if (error instanceof AuthError) {
+    if (error.type === "EmailSignInError") {
+      return {
+        success: false,
+        error: "メールの送信に失敗しました。アドレスを確認してください。",
+      };
+    }
+    return { success: false, error: "認証エラーが発生しました。" };
+  }
+  if (error instanceof AppError) {
+    return { success: false, error: error.message };
+  }
+  console.error("[auth-action]", error);
+  return { success: false, error: "サーバーエラーが発生しました。しばらく後にお試しください。" };
+}
 
+export async function signInWithEmail(email: string): Promise<ActionResult> {
   try {
-    await signIn("resend", { email, redirectTo: "/account" });
+    await container().authService.signInWithEmail({
+      email,
+      ip: await getIp(),
+      redirectTo: "/account",
+    });
     return { success: true };
   } catch (error) {
-    // signIn throws NEXT_REDIRECT on success — re-throw so Next.js navigates to /sign-in/verify.
     if (isRedirectError(error)) throw error;
-    if (error instanceof AuthError) {
-      switch (error.type) {
-        case "EmailSignInError":
-          return {
-            success: false,
-            error: "メールの送信に失敗しました。アドレスを確認してください。",
-          };
-        default:
-          return { success: false, error: "認証エラーが発生しました。" };
-      }
-    }
-    console.error("[signInWithEmail]", error);
-    return { success: false, error: "サーバーエラーが発生しました。しばらく後にお試しください。" };
+    return toResult(error);
   }
 }
 
 export async function signInWithOAuth(provider: "github" | "google"): Promise<ActionResult> {
-  const { success: rateOk } = await oauthRateLimiter.limit(await getIp());
-  if (!rateOk) {
-    return { success: false, error: "しばらく後にお試しください。" };
-  }
-
   try {
-    await signIn(provider, { redirectTo: "/account" });
+    await container().authService.signInWithOAuth({
+      provider,
+      ip: await getIp(),
+      redirectTo: "/account",
+    });
     return { success: true };
   } catch (error) {
-    // OAuth signIn redirects to the provider on success; only real errors reach here.
     if (isRedirectError(error)) throw error;
-    if (error instanceof AuthError) {
-      return { success: false, error: "OAuth 認証に失敗しました。" };
-    }
-    console.error("[signInWithOAuth]", error);
-    return { success: false, error: "サーバーエラーが発生しました。しばらく後にお試しください。" };
+    return toResult(error);
   }
 }
