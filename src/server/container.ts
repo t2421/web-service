@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { isMockModeEnabled } from "@/lib/mock-mode";
 import { stripe, STRIPE_PRICES } from "@/lib/stripe";
 
-import { ConfigError } from "@/server/domain/errors";
 import type { AuthHandlers } from "@/server/ports/auth-handlers";
 import type { BillingGateway } from "@/server/ports/billing-gateway";
 import type { DbHealthCheck } from "@/server/ports/db-health";
@@ -93,12 +92,12 @@ function build(): Container {
     : makeNextAuthHandlers(nextAuthInstance!);
 
   // --- External services ---
+  // Stripe gateway can be constructed even when STRIPE_SECRET_KEY is unset; it
+  // throws ConfigError at call-time so `next build` page-data collection (which
+  // imports the routes without ever invoking checkout) doesn't crash.
   const billingGateway: BillingGateway = mock
     ? makeMockBillingGateway()
-    : (() => {
-        if (!stripe) throw new ConfigError("Stripe is not configured. Set STRIPE_SECRET_KEY.");
-        return makeStripeBillingGateway(stripe, STRIPE_PRICES);
-      })();
+    : makeStripeBillingGateway(stripe, STRIPE_PRICES);
 
   const emailLimiter: RateLimiter = mock
     ? makeNoopRateLimiter()

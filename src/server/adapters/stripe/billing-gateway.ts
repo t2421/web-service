@@ -7,22 +7,34 @@ import { absoluteUrl } from "@/lib/utils";
 
 type StripePrices = Readonly<{ monthly?: string; yearly?: string }>;
 
-export function makeStripeBillingGateway(stripe: Stripe, prices: StripePrices): BillingGateway {
+// Accepts a nullable Stripe client and defers the "is configured" check until the
+// gateway is actually invoked. This lets the composition root construct the gateway
+// eagerly without crashing builds that don't ship Stripe credentials.
+export function makeStripeBillingGateway(
+  stripe: Stripe | null,
+  prices: StripePrices,
+): BillingGateway {
+  function requireStripe(): Stripe {
+    if (!stripe) throw new ConfigError("Stripe is not configured. Set STRIPE_SECRET_KEY.");
+    return stripe;
+  }
+
   return {
     async createCheckoutUrl({ userId, email, plan, existingCustomerId, successPath, cancelPath }) {
       const priceId = prices[plan];
       if (!priceId) throw new ConfigError(`Stripe price for ${plan} not configured`);
 
+      const s = requireStripe();
       let customerId = existingCustomerId ?? undefined;
       if (!customerId) {
-        const customer = await stripe.customers.create({
+        const customer = await s.customers.create({
           email,
           metadata: { userId },
         });
         customerId = customer.id;
       }
 
-      const checkout = await stripe.checkout.sessions.create({
+      const checkout = await s.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
@@ -38,7 +50,7 @@ export function makeStripeBillingGateway(stripe: Stripe, prices: StripePrices): 
     },
 
     async createPortalUrl({ customerId, returnPath }) {
-      const portal = await stripe.billingPortal.sessions.create({
+      const portal = await requireStripe().billingPortal.sessions.create({
         customer: customerId,
         return_url: absoluteUrl(returnPath),
       });
