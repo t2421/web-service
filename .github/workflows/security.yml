@@ -1,0 +1,88 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 毎日 06:00 UTC に既知脆弱性を再走査（後から CVE が公開されるため）
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  # ---- 1. 依存関係の既知脆弱性スキャン (pnpm audit) ----
+  audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # install スクリプトを完全に無効化してインストール（監査時に副作用を出さない）
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # production 依存のみを high 以上で監査（dev は別ジョブで warn 扱い）
+      - name: Audit production dependencies (fail on high+)
+        run: pnpm audit --prod --audit-level=high
+      - name: Audit dev dependencies (warn only)
+        run: pnpm audit --dev --audit-level=high || true
+
+  # ---- 2. PR で追加/変更された依存関係をブロック ----
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          # 許可しないライセンス（必要に応じて調整）
+          deny-licenses: AGPL-1.0, AGPL-3.0, GPL-2.0, GPL-3.0
+          comment-summary-in-pr: on-failure
+
+  # ---- 3. ロックファイル汚染（lockfile poisoning）の検出 ----
+  lockfile-integrity:
+    name: Lockfile integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # --frozen-lockfile かつ --ignore-scripts でロックの完全性のみ検証
+      - name: Verify pnpm-lock.yaml is in sync with package.json
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      # tarball の SHA-512 整合性検証（ストア比較）
+      - name: Verify store integrity
+        run: pnpm install --frozen-lockfile --ignore-scripts --verify-store-integrity
+
+  # ---- 4. OpenSSF Scorecard（保守状況・公開設定の点検）----
+  scorecard:
+    name: OpenSSF Scorecard
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: scorecard-results.sarif
+          results_format: sarif
+          publish_results: false
+      - uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: scorecard-results.sarif

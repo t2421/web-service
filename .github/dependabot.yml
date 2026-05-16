@@ -5,19 +5,32 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # サプライチェーン対策: 一括バージョンアップで悪性パッケージを呑み込まないよう
+    # production 依存は patch のみまとめ、minor/major は個別 PR にして 1 つずつ確認する
     groups:
-      production-deps:
+      production-patch:
         dependency-type: production
         update-types:
-          - minor
           - patch
       dev-deps:
         dependency-type: development
         update-types:
           - minor
           - patch
+    # メジャー更新は別 PR（差分レビューを必須化）
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # 重要パッケージはレビュー強制（コードオーナーがいれば指定）
+    labels:
+      - dependencies
+      - security-review-needed
 
+  # GitHub Actions も pin 漏れを検出するため監視
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: monthly
+      interval: weekly
+    labels:
+      - dependencies
+      - github-actions
