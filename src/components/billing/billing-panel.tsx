@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { SectionCard } from "@/components/ui/section-card";
 import { toSafeRedirect } from "@/lib/redirect-safety";
 import { createCheckoutSession, createPortalSession } from "@/server/actions/billing";
 
@@ -43,7 +44,7 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
 
   if (isActive) {
     return (
-      <div className="bg-card rounded-lg border p-6">
+      <SectionCard as="div">
         <p className="font-medium">Pro プランがアクティブです</p>
         <p className="text-muted-foreground mt-1 text-sm">
           次回更新: {subscription?.currentPeriodEnd?.toLocaleDateString("ja-JP")}
@@ -51,26 +52,26 @@ export function BillingPanel({ subscription }: { subscription: Subscription }) {
         <Button onClick={handlePortal} disabled={pending} className="mt-4">
           支払い情報を管理
         </Button>
-      </div>
+      </SectionCard>
     );
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="bg-card rounded-lg border p-6">
+      <SectionCard as="div">
         <p className="text-lg font-semibold">Pro 月額</p>
         <p className="text-muted-foreground mt-1 text-sm">月単位で柔軟に</p>
         <Button onClick={() => handleCheckout("monthly")} disabled={pending} className="mt-4">
           アップグレード
         </Button>
-      </div>
-      <div className="bg-card rounded-lg border p-6">
+      </SectionCard>
+      <SectionCard as="div">
         <p className="text-lg font-semibold">Pro 年額</p>
         <p className="text-muted-foreground mt-1 text-sm">2 ヶ月分お得</p>
         <Button onClick={() => handleCheckout("yearly")} disabled={pending} className="mt-4">
           アップグレード
         </Button>
-      </div>
+      </SectionCard>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LogOut, User } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { getInitials } from "@/lib/initials";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,7 @@ type AppHeaderProps = {
 };
 
 export function AppHeader({ user }: AppHeaderProps) {
-  const initials = (user.name ?? user.email ?? "?").slice(0, 2).toUpperCase();
+  const initials = getInitials(user.name, user.email);
 
   return (
     <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
