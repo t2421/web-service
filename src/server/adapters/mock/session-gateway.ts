@@ -1,6 +1,6 @@
 import "server-only";
 import { readMockUser } from "@/server/adapters/mock/cookie-helpers";
-import type { AuthSession } from "@/server/domain/auth";
+import { toAuthSession } from "@/server/domain/auth";
 import { SESSION_MAX_AGE_MS } from "@/server/domain/constants";
 import type { SessionGateway } from "@/server/ports/session-gateway";
 
@@ -9,17 +9,10 @@ export function makeMockSessionGateway(): SessionGateway {
     async getSession() {
       const mockUser = await readMockUser();
       if (!mockUser) return null;
-      const session: AuthSession = {
-        user: {
-          id: mockUser.id,
-          name: mockUser.name,
-          email: mockUser.email,
-          image: mockUser.image,
-          role: mockUser.role,
-        },
+      return toAuthSession({
+        user: mockUser,
         expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS),
-      };
-      return session;
+      });
     },
   };
 }

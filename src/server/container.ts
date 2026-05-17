@@ -20,7 +20,10 @@ import {
   type StripeWebhookService,
 } from "@/server/services/stripe-webhook-service";
 
-import { makeNextAuthInstance } from "@/server/adapters/nextauth/full-instance";
+import {
+  makeNextAuthInstance,
+  type NextAuthInstance,
+} from "@/server/adapters/nextauth/full-instance";
 import { makeNextAuthHandlers } from "@/server/adapters/nextauth/auth-handlers";
 import { makeNextAuthSessionGateway } from "@/server/adapters/nextauth/session-gateway";
 import { makeNextAuthSignInGateway } from "@/server/adapters/nextauth/sign-in-gateway";
@@ -61,6 +64,35 @@ export type Container = Readonly<{
   stripeWebhookService: StripeWebhookService;
 }>;
 
+type AuthLayer = {
+  sessions: SessionGateway;
+  signIn: SignInGateway;
+  authHandlers: AuthHandlers;
+};
+
+function buildNextAuthLayer(instance: NextAuthInstance): AuthLayer {
+  return {
+    sessions: makeNextAuthSessionGateway(() => instance.auth()),
+    signIn: makeNextAuthSignInGateway(
+      instance.signIn as unknown as Parameters<typeof makeNextAuthSignInGateway>[0],
+    ),
+    authHandlers: makeNextAuthHandlers(instance),
+  };
+}
+
+function buildMockAuthLayer(): AuthLayer {
+  return {
+    sessions: makeMockSessionGateway(),
+    signIn: makeMockSignInGateway(),
+    authHandlers: makeMockAuthHandlers(),
+  };
+}
+
+function buildAuthLayer(mock: boolean): AuthLayer {
+  if (mock) return buildMockAuthLayer();
+  return buildNextAuthLayer(makeNextAuthInstance(makePrismaAuthDbAdapter(prisma)));
+}
+
 // The composition root. The ONLY place where:
 //   - E2E_MOCK_MODE branches between real and mock implementations
 //   - The concrete auth provider (NextAuth) is wired to its DB adapter
@@ -80,21 +112,7 @@ function build(): Container {
   // --- Auth layer ---
   // The NextAuth instance is built here with the chosen DB adapter, so swapping
   // ORMs is a single import change (PrismaAdapter -> DrizzleAdapter).
-  const nextAuthInstance = mock ? null : makeNextAuthInstance(makePrismaAuthDbAdapter(prisma));
-
-  const sessions: SessionGateway = mock
-    ? makeMockSessionGateway()
-    : makeNextAuthSessionGateway(() => nextAuthInstance!.auth());
-
-  const signIn: SignInGateway = mock
-    ? makeMockSignInGateway()
-    : makeNextAuthSignInGateway(
-        nextAuthInstance!.signIn as unknown as Parameters<typeof makeNextAuthSignInGateway>[0],
-      );
-
-  const authHandlers: AuthHandlers = mock
-    ? makeMockAuthHandlers()
-    : makeNextAuthHandlers(nextAuthInstance!);
+  const { sessions, signIn, authHandlers } = buildAuthLayer(mock);
 
   // --- External services ---
   // Stripe gateway can be constructed even when STRIPE_SECRET_KEY is unset; it
