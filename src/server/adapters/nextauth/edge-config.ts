@@ -2,6 +2,8 @@ import type { NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 
+import { PROTECTED_PATHS } from "@/server/domain/constants";
+
 // Edge-compatible NextAuth config: no Node-only imports (no Prisma, no Resend).
 // Used both by middleware and as the base of the full Node-side instance.
 export const nextAuthEdgeConfig: NextAuthConfig = {
@@ -30,7 +32,6 @@ export const nextAuthEdgeConfig: NextAuthConfig = {
   ],
   callbacks: {
     async authorized({ auth, request }) {
-      const PROTECTED_PATHS = ["/dashboard", "/billing", "/settings", "/account"];
       const isProtected = PROTECTED_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
       if (!isProtected) return true;
       return !!auth?.user;

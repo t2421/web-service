@@ -44,14 +44,14 @@ export function SignInForm() {
     e.preventDefault();
     startEmailTransition(async () => {
       const result = await signInWithEmail(email);
-      if (!result.success) toast.error(result.error);
+      if (!result.success) toast.error(result.error.message);
     });
   }
 
   function handleOAuth(provider: "github" | "google") {
     startOAuthTransition(async () => {
       const result = await signInWithOAuth(provider);
-      if (!result.success) toast.error(result.error);
+      if (!result.success) toast.error(result.error.message);
     });
   }
 

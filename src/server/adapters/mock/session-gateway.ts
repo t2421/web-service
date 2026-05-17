@@ -1,15 +1,13 @@
-import { cookies } from "next/headers";
-
 import "server-only";
-import { MOCK_SESSION_COOKIE, parseMockUser } from "@/lib/mock-mode";
+import { readMockUser } from "@/server/adapters/mock/cookie-helpers";
 import type { AuthSession } from "@/server/domain/auth";
+import { SESSION_MAX_AGE_MS } from "@/server/domain/constants";
 import type { SessionGateway } from "@/server/ports/session-gateway";
 
 export function makeMockSessionGateway(): SessionGateway {
   return {
     async getSession() {
-      const store = await cookies();
-      const mockUser = parseMockUser(store.get(MOCK_SESSION_COOKIE)?.value);
+      const mockUser = await readMockUser();
       if (!mockUser) return null;
       const session: AuthSession = {
         user: {
@@ -19,7 +17,7 @@ export function makeMockSessionGateway(): SessionGateway {
           image: mockUser.image,
           role: mockUser.role,
         },
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS),
       };
       return session;
     },
