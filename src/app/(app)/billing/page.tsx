@@ -1,10 +1,9 @@
 import { container } from "@/server/container";
 import { BillingPanel } from "@/components/billing/billing-panel";
 
+// Authentication is enforced by `(app)/layout.tsx`; see the comment in
+// account/page.tsx for details.
 export default async function BillingPage() {
-  const session = await container().sessions.getSession();
-  if (!session?.user?.id) return null;
-
   const subscription = await container().billingService.getCurrentSubscription();
 
   return (
