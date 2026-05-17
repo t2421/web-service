@@ -18,11 +18,17 @@ test("clicking upgrade activates the plan in mock mode", async ({ page, signInAs
   await page.goto("/billing");
   await expect(page.getByText("Pro 月額")).toBeVisible();
 
+  // BillingPanel は client component。production build では React 19 の
+  // streaming hydration が click より遅れることがあり、Playwright のデフォルト
+  // auto-wait は React の hydration を知らないので click 自体が server action を
+  // 起動しない。networkidle で all-quiet を待ち、確実に hydration を完了させる。
+  await page.waitForLoadState("networkidle");
+
   await page.getByRole("button", { name: "アップグレード" }).first().click();
 
   // モック checkout は cookie を subscription=active に書き換え、revalidatePath で
-  // 現ルートを再描画する。同時にクライアント側で /billing?status=mock-success への
-  // ハードナビゲーションも走るが、両者は race するため URL 末尾の query には依存しない。
+  // /billing を再描画する。同時にクライアントが /billing?status=mock-success へ
+  // ハードナビゲーションも仕掛けるが両者は race するため URL 末尾の query は不問。
   // ユーザに見える唯一の結果である「アクティブプラン表示」だけ検証する。
   await expect(page.getByText("Pro プランがアクティブです")).toBeVisible({ timeout: 10000 });
 });

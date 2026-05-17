@@ -22,10 +22,15 @@ const nextConfig: NextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      // Next.js dev mode and React require unsafe-eval/unsafe-inline in development
+      // Next.js App Router emits inline <script> tags carrying the RSC payload
+      // (self.__next_f.push(...)). Without 'unsafe-inline' these are blocked by
+      // CSP and React Server Components fail to hydrate ("Connection closed."),
+      // leaving interactive components (e.g. <button onClick>) inert.
+      // The proper hardening is a nonce-based CSP injected via middleware;
+      // until that is in place, 'unsafe-inline' is required for both dev and prod.
       process.env.NODE_ENV === "development"
         ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-        : "script-src 'self'",
+        : "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
       "font-src 'self' https://fonts.gstatic.com",
