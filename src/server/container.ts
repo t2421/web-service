@@ -15,6 +15,10 @@ import type { UserRepository } from "@/server/ports/user-repository";
 
 import { makeBillingService, type BillingService } from "@/server/services/billing-service";
 import { makeAuthService, type AuthService } from "@/server/services/auth-service";
+import {
+  makeStripeWebhookService,
+  type StripeWebhookService,
+} from "@/server/services/stripe-webhook-service";
 
 import { makeNextAuthInstance } from "@/server/adapters/nextauth/full-instance";
 import { makeNextAuthHandlers } from "@/server/adapters/nextauth/auth-handlers";
@@ -54,6 +58,7 @@ export type Container = Readonly<{
   // Use cases
   billingService: BillingService;
   authService: AuthService;
+  stripeWebhookService: StripeWebhookService;
 }>;
 
 // The composition root. The ONLY place where:
@@ -118,6 +123,16 @@ function build(): Container {
     oauthLimiter,
     billingService: makeBillingService({ sessions, users, subscriptions, billing: billingGateway }),
     authService: makeAuthService({ signIn, emailLimiter, oauthLimiter }),
+    stripeWebhookService: makeStripeWebhookService({
+      subscriptions,
+      users,
+      // Lazy retrieve: webhook handlers only need this for `checkout.session.completed`,
+      // where stripe is guaranteed to be configured (the webhook secret check fires first).
+      retrieveSubscription: (id) => {
+        if (!stripe) throw new Error("Stripe is not configured");
+        return stripe.subscriptions.retrieve(id);
+      },
+    }),
   };
 }
 

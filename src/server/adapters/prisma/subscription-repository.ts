@@ -27,5 +27,20 @@ export function makePrismaSubscriptionRepository(prisma: PrismaClient): Subscrip
       };
       return subscription;
     },
+
+    async upsertFromStripe(input) {
+      const data = {
+        stripeSubscriptionId: input.stripeSubscriptionId,
+        status: input.status as PrismaStatus,
+        priceId: input.priceId,
+        currentPeriodEnd: input.currentPeriodEnd,
+        cancelAtPeriodEnd: input.cancelAtPeriodEnd,
+      };
+      await prisma.subscription.upsert({
+        where: { userId: input.userId },
+        create: { userId: input.userId, ...data },
+        update: data,
+      });
+    },
   };
 }
