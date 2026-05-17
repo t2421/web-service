@@ -1,5 +1,7 @@
 import type { Session } from "next-auth";
 
+import { SESSION_MAX_AGE_MS } from "@/server/domain/constants";
+
 export const MOCK_SESSION_COOKIE = "__e2e_mock_user";
 
 export type MockSubscriptionState = "free" | "active";
@@ -65,6 +67,6 @@ export function mockSessionFromUser(user: MockUser): Session {
       image: user.image,
       role: user.role,
     },
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    expires: new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString(),
   };
 }

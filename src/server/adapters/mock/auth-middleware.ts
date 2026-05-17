@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { MOCK_SESSION_COOKIE, parseMockUser } from "@/lib/mock-mode";
+import { PROTECTED_PATHS } from "@/server/domain/constants";
 import type { AuthMiddleware } from "@/server/ports/auth-middleware";
-
-const PROTECTED_PATHS = ["/dashboard", "/billing", "/settings", "/account"];
 
 // Edge-safe middleware: authorize based purely on the mock cookie. No NextAuth,
 // no DB, no env reads beyond what mock-mode.ts already did upstream.

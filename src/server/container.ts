@@ -15,8 +15,15 @@ import type { UserRepository } from "@/server/ports/user-repository";
 
 import { makeBillingService, type BillingService } from "@/server/services/billing-service";
 import { makeAuthService, type AuthService } from "@/server/services/auth-service";
+import {
+  makeStripeWebhookService,
+  type StripeWebhookService,
+} from "@/server/services/stripe-webhook-service";
 
-import { makeNextAuthInstance } from "@/server/adapters/nextauth/full-instance";
+import {
+  makeNextAuthInstance,
+  type NextAuthInstance,
+} from "@/server/adapters/nextauth/full-instance";
 import { makeNextAuthHandlers } from "@/server/adapters/nextauth/auth-handlers";
 import { makeNextAuthSessionGateway } from "@/server/adapters/nextauth/session-gateway";
 import { makeNextAuthSignInGateway } from "@/server/adapters/nextauth/sign-in-gateway";
@@ -54,7 +61,37 @@ export type Container = Readonly<{
   // Use cases
   billingService: BillingService;
   authService: AuthService;
+  stripeWebhookService: StripeWebhookService;
 }>;
+
+type AuthLayer = {
+  sessions: SessionGateway;
+  signIn: SignInGateway;
+  authHandlers: AuthHandlers;
+};
+
+function buildNextAuthLayer(instance: NextAuthInstance): AuthLayer {
+  return {
+    sessions: makeNextAuthSessionGateway(() => instance.auth()),
+    signIn: makeNextAuthSignInGateway(
+      instance.signIn as unknown as Parameters<typeof makeNextAuthSignInGateway>[0],
+    ),
+    authHandlers: makeNextAuthHandlers(instance),
+  };
+}
+
+function buildMockAuthLayer(): AuthLayer {
+  return {
+    sessions: makeMockSessionGateway(),
+    signIn: makeMockSignInGateway(),
+    authHandlers: makeMockAuthHandlers(),
+  };
+}
+
+function buildAuthLayer(mock: boolean): AuthLayer {
+  if (mock) return buildMockAuthLayer();
+  return buildNextAuthLayer(makeNextAuthInstance(makePrismaAuthDbAdapter(prisma)));
+}
 
 // The composition root. The ONLY place where:
 //   - E2E_MOCK_MODE branches between real and mock implementations
@@ -75,21 +112,7 @@ function build(): Container {
   // --- Auth layer ---
   // The NextAuth instance is built here with the chosen DB adapter, so swapping
   // ORMs is a single import change (PrismaAdapter -> DrizzleAdapter).
-  const nextAuthInstance = mock ? null : makeNextAuthInstance(makePrismaAuthDbAdapter(prisma));
-
-  const sessions: SessionGateway = mock
-    ? makeMockSessionGateway()
-    : makeNextAuthSessionGateway(() => nextAuthInstance!.auth());
-
-  const signIn: SignInGateway = mock
-    ? makeMockSignInGateway()
-    : makeNextAuthSignInGateway(
-        nextAuthInstance!.signIn as unknown as Parameters<typeof makeNextAuthSignInGateway>[0],
-      );
-
-  const authHandlers: AuthHandlers = mock
-    ? makeMockAuthHandlers()
-    : makeNextAuthHandlers(nextAuthInstance!);
+  const { sessions, signIn, authHandlers } = buildAuthLayer(mock);
 
   // --- External services ---
   // Stripe gateway can be constructed even when STRIPE_SECRET_KEY is unset; it
@@ -118,6 +141,16 @@ function build(): Container {
     oauthLimiter,
     billingService: makeBillingService({ sessions, users, subscriptions, billing: billingGateway }),
     authService: makeAuthService({ signIn, emailLimiter, oauthLimiter }),
+    stripeWebhookService: makeStripeWebhookService({
+      subscriptions,
+      users,
+      // Lazy retrieve: webhook handlers only need this for `checkout.session.completed`,
+      // where stripe is guaranteed to be configured (the webhook secret check fires first).
+      retrieveSubscription: (id) => {
+        if (!stripe) throw new Error("Stripe is not configured");
+        return stripe.subscriptions.retrieve(id);
+      },
+    }),
   };
 }
 

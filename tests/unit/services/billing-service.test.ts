@@ -14,7 +14,10 @@ function fakeSessions(session: AuthSession | null): SessionGateway {
 }
 
 function fakeSubscriptions(map: Record<string, Subscription>): SubscriptionRepository {
-  return { findByUserId: async (id) => map[id] ?? null };
+  return {
+    findByUserId: async (id) => map[id] ?? null,
+    upsertFromStripe: async () => {},
+  };
 }
 
 function fakeUsers(initial: Record<string, UserRecord>) {
@@ -22,6 +25,8 @@ function fakeUsers(initial: Record<string, UserRecord>) {
   const writes: Array<{ id: string; customerId: string }> = [];
   const repo: UserRepository = {
     findById: async (id) => data[id] ?? null,
+    findByStripeCustomerId: async (customerId) =>
+      Object.values(data).find((u) => u.stripeCustomerId === customerId) ?? null,
     setStripeCustomerId: async (id, customerId) => {
       writes.push({ id, customerId });
       const existing = data[id];
