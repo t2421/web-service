@@ -7,7 +7,15 @@ import { useState } from "react";
 
 import { PostHogProvider } from "@/components/layout/posthog-provider";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  nonce,
+}: {
+  children: React.ReactNode;
+  // CSP nonce forwarded from RootLayout. next-themes injects an inline FOUC-prevention
+  // <script> into <body>; without the nonce it would be blocked by our strict CSP.
+  nonce?: string;
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -22,7 +30,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+        nonce={nonce}
+      >
         <QueryClientProvider client={queryClient}>
           <PostHogProvider>{children}</PostHogProvider>
         </QueryClientProvider>
