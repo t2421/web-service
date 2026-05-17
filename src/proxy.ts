@@ -1,10 +1,9 @@
-import NextAuth from "next-auth";
+import { edgeContainer } from "@/server/edge-container";
 
-import { authConfig } from "@/lib/auth.config";
-
-// Edge-compatible: uses authConfig which has no Node-only imports (no DB, no email)
-export const { auth: middleware } = NextAuth(authConfig);
-export default middleware;
+// The Edge container picks the right auth-provider middleware. To switch from
+// NextAuth to Clerk / Lucia / anything else: change edge-container.ts. This file
+// stays as is.
+export default edgeContainer.middleware;
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],

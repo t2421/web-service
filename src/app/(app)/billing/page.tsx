@@ -1,14 +1,11 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { container } from "@/server/container";
 import { BillingPanel } from "@/components/billing/billing-panel";
 
 export default async function BillingPage() {
-  const session = await auth();
+  const session = await container().sessions.getSession();
   if (!session?.user?.id) return null;
 
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId: session.user.id },
-  });
+  const subscription = await container().billingService.getCurrentSubscription();
 
   return (
     <div className="space-y-6">

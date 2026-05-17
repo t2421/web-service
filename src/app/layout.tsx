@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Inter } from "next/font/google";
 
 import { Providers } from "@/components/layout/providers";
@@ -33,18 +34,25 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Reading headers() opts every page into dynamic rendering. This lets the
+  // Edge middleware's per-request CSP nonce (set as x-nonce) reach Next.js's
+  // renderer, which stamps the nonce onto its own inline RSC bootstrap scripts.
+  // Without dynamic rendering, statically generated pages would ship un-nonced
+  // inline scripts and the strict CSP would block them.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
         className={`${inter.variable} bg-background min-h-screen font-sans`}
         suppressHydrationWarning
       >
-        <Providers>
+        <Providers nonce={nonce}>
           {children}
           <Toaster richColors closeButton position="top-right" />
         </Providers>

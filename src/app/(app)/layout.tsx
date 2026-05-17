@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth";
+import { container } from "@/server/container";
 import { AppHeader } from "@/components/layout/app-header";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await container().sessions.getSession();
   if (!session?.user) {
     redirect("/sign-in");
   }

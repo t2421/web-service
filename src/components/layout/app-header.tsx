@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { signOut } from "next-auth/react";
 import { LogOut, User } from "lucide-react";
 
+import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,7 +66,7 @@ export function AppHeader({ user }: AppHeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => signOut({ callbackUrl: "/" })}>
+            <DropdownMenuItem onSelect={() => authClient.signOut({ callbackUrl: "/" })}>
               <LogOut className="mr-2 size-4" /> サインアウト
             </DropdownMenuItem>
           </DropdownMenuContent>

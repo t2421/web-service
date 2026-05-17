@@ -2,8 +2,8 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { signOut } from "next-auth/react";
-import { signIn as signInWebAuthn } from "next-auth/webauthn";
+
+import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export function AccountForm({ user }: { user: User }) {
   function handleRegisterPasskey() {
     startPasskeyTransition(async () => {
       try {
-        await signInWebAuthn("webauthn", { action: "register" });
+        await authClient.registerPasskey();
         toast.success("パスキーを登録しました。");
       } catch {
         toast.error("パスキーの登録に失敗しました。");
@@ -87,7 +87,7 @@ export function AccountForm({ user }: { user: User }) {
       <section className="border-destructive/30 bg-card rounded-lg border p-6">
         <h2 className="text-destructive mb-1 font-semibold">サインアウト</h2>
         <p className="text-muted-foreground mb-4 text-sm">このデバイスからサインアウトします。</p>
-        <Button variant="destructive" onClick={() => signOut({ callbackUrl: "/" })}>
+        <Button variant="destructive" onClick={() => authClient.signOut({ callbackUrl: "/" })}>
           サインアウト
         </Button>
       </section>

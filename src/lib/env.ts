@@ -22,6 +22,9 @@ const serverSchema = z.object({
   SENTRY_PROJECT: z.string().optional(),
   SENTRY_AUTH_TOKEN: z.string().optional(),
   POSTHOG_PERSONAL_API_KEY: z.string().optional(),
+  // Frontend E2E mock mode. Set to "1" to stub auth/Stripe for Playwright.
+  // MUST NOT be set in real production environments.
+  E2E_MOCK_MODE: z.enum(["0", "1"]).optional(),
 });
 
 const clientSchema = z.object({
@@ -58,6 +61,7 @@ const processEnv = {
   SENTRY_PROJECT: e(process.env.SENTRY_PROJECT),
   SENTRY_AUTH_TOKEN: e(process.env.SENTRY_AUTH_TOKEN),
   POSTHOG_PERSONAL_API_KEY: e(process.env.POSTHOG_PERSONAL_API_KEY),
+  E2E_MOCK_MODE: e(process.env.E2E_MOCK_MODE) as "0" | "1" | undefined,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: e(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
   NEXT_PUBLIC_SENTRY_DSN: e(process.env.NEXT_PUBLIC_SENTRY_DSN),
@@ -67,9 +71,17 @@ const processEnv = {
 
 const isServer = typeof window === "undefined";
 
-const parsed = isServer
-  ? serverSchema.merge(clientSchema).safeParse(processEnv)
-  : clientSchema.safeParse(processEnv);
+// Fail-fast at import time: missing required env vars should crash `next build`,
+// `pnpm test`, `pnpm dev`, etc., so misconfigurations surface immediately rather
+// than waiting for the first runtime request. CI passes dummy values for the
+// build job (.github/workflows/ci.yml). For one-off local experiments,
+// `SKIP_ENV_VALIDATION=1` is an explicit escape hatch.
+const parsed =
+  process.env.SKIP_ENV_VALIDATION === "1"
+    ? { success: true as const, data: processEnv }
+    : isServer
+      ? serverSchema.merge(clientSchema).safeParse(processEnv)
+      : clientSchema.safeParse(processEnv);
 
 if (!parsed.success) {
   console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);

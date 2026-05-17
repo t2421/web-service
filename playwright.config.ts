@@ -25,9 +25,10 @@ export default defineConfig({
   webServer: process.env.CI
     ? undefined
     : {
-        command: "pnpm dev",
+        command: "pnpm dev:e2e",
         url: baseURL,
         reuseExistingServer: true,
         timeout: 120_000,
+        env: { E2E_MOCK_MODE: "1" },
       },
 });

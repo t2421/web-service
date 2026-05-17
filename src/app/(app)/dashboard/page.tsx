@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
+import { container } from "@/server/container";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await container().sessions.getSession();
 
   return (
     <div className="space-y-6">
