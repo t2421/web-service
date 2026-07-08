@@ -8,7 +8,7 @@
 
 | カテゴリ                | 採用                                          |
 | ----------------------- | --------------------------------------------- |
-| フレームワーク          | Next.js 15 (App Router, TypeScript)           |
+| フレームワーク          | Next.js 16 (App Router, TypeScript)           |
 | UI                      | Tailwind CSS + shadcn/ui + Radix UI           |
 | 状態管理                | TanStack Query (server) + Zustand (client)    |
 | フォーム                | React Hook Form + Zod                         |
@@ -20,14 +20,14 @@
 | メール                  | Resend + React Email                          |
 | エラー監視              | Sentry                                        |
 | 分析                    | PostHog                                       |
-| デプロイ                | Vercel                                        |
+| デプロイ                | Vercel (または Dockerfile でセルフホスト)     |
 | CI                      | GitHub Actions                                |
 | テスト                  | Vitest + Testing Library + Playwright         |
 
 ## 必要環境
 
-- Node.js 20.11+
-- pnpm 9+
+- Node.js 22+
+- pnpm 10.16+
 - Docker (ローカルDB / Redis)
 
 ## セットアップ
@@ -67,9 +67,12 @@ src/
 │   ├── auth/         # 認証 UI
 │   └── billing/      # 課金 UI
 ├── server/
-│   ├── actions/      # Server Actions
-│   ├── services/     # ドメインロジック
-│   └── repositories/ # データアクセス (Prisma ラップ)
+│   ├── actions/      # Server Actions (境界: Zod 検証 + エラー整形)
+│   ├── services/     # ユースケース (auth / billing / account)
+│   ├── domain/       # ドメイン型とエラー
+│   ├── ports/        # 依存の抽象 (repository / gateway / limiter…)
+│   ├── adapters/     # 実装 (prisma / stripe / nextauth / upstash / mock)
+│   └── container.ts  # 合成ルート (本物と E2E モックの切替はここだけ)
 ├── lib/              # 横断ユーティリティ (db, auth, stripe, email, redis…)
 ├── hooks/            # クライアント React hooks
 ├── emails/           # React Email テンプレート
@@ -105,6 +108,17 @@ tests/
 - 必要な環境変数は `.env.example` 参照
 - 詳細は `docs/SETUP.md` の「デプロイ」セクション
 
+### Docker (セルフホスト)
+
+```bash
+docker build -t web-service --build-arg NEXT_PUBLIC_APP_URL=https://app.example.com .
+docker run -p 3000:3000 --env-file .env web-service
+```
+
+- `NEXT_PUBLIC_*` はビルド時にバンドルへ焼き込まれるため build-arg で渡す
+- サーバー側シークレットは実行時に `--env-file` で注入する(イメージに含まれない)
+- DB マイグレーションは起動とは別に `pnpm db:migrate:deploy` を実行する
+
 ## ライセンス
 
-未定（必要に応じて追加）
+[MIT](./LICENSE)

@@ -8,7 +8,7 @@
 ## 重要な前提
 
 - パッケージマネージャ: **pnpm**
-- フレームワーク: **Next.js 15 (App Router)**
+- フレームワーク: **Next.js 16 (App Router)**
 - 言語: **TypeScript strict + noUncheckedIndexedAccess**
 - ORM: **Prisma**
 - 認証: **Auth.js v5 (database session)**
@@ -22,7 +22,9 @@
 - 不変オブジェクト優先（mutate しない）
 - ファイルは小さく（< 400 行、最大 800 行）
 - ビジネスロジックは `src/server/services/` に集約
-- DB アクセスは `src/server/repositories/` 経由が原則
+- 依存は `src/server/ports/`（抽象）+ `src/server/adapters/`（実装）で分離し、
+  組み立ては `src/server/container.ts` のみで行う
+- DB アクセスはリポジトリアダプタ（`adapters/prisma/`）経由が原則
 - 入力は **Zod** で境界検証
 
 ## よく使うコマンド

@@ -4,6 +4,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Docker (セルフホスト) 用。`next start` は standalone と併用できないため、
+  // Dockerfile 内でのみ NEXT_OUTPUT_MODE=standalone を設定する。
+  output: process.env.NEXT_OUTPUT_MODE === "standalone" ? "standalone" : undefined,
   typedRoutes: true,
   experimental: {
     serverActions: {
