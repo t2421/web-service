@@ -23,5 +23,10 @@ export function makeMockSessionGateway(): SessionGateway {
       };
       return session;
     },
+
+    async destroySession() {
+      const store = await cookies();
+      store.delete(MOCK_SESSION_COOKIE);
+    },
   };
 }

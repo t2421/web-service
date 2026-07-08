@@ -10,7 +10,7 @@ import type { UserRecord, UserRepository } from "@/server/ports/user-repository"
 import { makeBillingService } from "@/server/services/billing-service";
 
 function fakeSessions(session: AuthSession | null): SessionGateway {
-  return { getSession: async () => session };
+  return { getSession: async () => session, destroySession: async () => {} };
 }
 
 function fakeSubscriptions(map: Record<string, Subscription>): SubscriptionRepository {
@@ -22,10 +22,17 @@ function fakeUsers(initial: Record<string, UserRecord>) {
   const writes: Array<{ id: string; customerId: string }> = [];
   const repo: UserRepository = {
     findById: async (id) => data[id] ?? null,
+    updateName: async (id, name) => {
+      const existing = data[id];
+      if (existing) data[id] = { ...existing, name };
+    },
     setStripeCustomerId: async (id, customerId) => {
       writes.push({ id, customerId });
       const existing = data[id];
       if (existing) data[id] = { ...existing, stripeCustomerId: customerId };
+    },
+    deleteById: async (id) => {
+      delete data[id];
     },
   };
   return { repo, writes };
@@ -42,6 +49,7 @@ function fakeBilling(stub: { url: string; customerId: string }): {
       return stub;
     },
     createPortalUrl: async ({ returnPath }) => ({ url: `https://portal.example${returnPath}` }),
+    cancelSubscription: async () => {},
   };
   return { gateway, calls };
 }
@@ -70,6 +78,7 @@ describe("BillingService.getCurrentSubscription", () => {
 
   it("returns the subscription for the session user", async () => {
     const sub: Subscription = {
+      stripeSubscriptionId: "sub_1",
       status: "active",
       priceId: "price_1",
       currentPeriodEnd: new Date("2030-01-01"),
@@ -97,7 +106,7 @@ describe("BillingService.startCheckout", () => {
 
   it("persists a new customer id when the gateway returns one", async () => {
     const users = fakeUsers({
-      "user-1": { id: "user-1", email: "alice@example.com", stripeCustomerId: null },
+      "user-1": { id: "user-1", name: "Alice", email: "alice@example.com", stripeCustomerId: null },
     });
     const billing = fakeBilling({ url: "https://checkout.example", customerId: "cus_new" });
     const svc = makeBillingService({
@@ -120,7 +129,12 @@ describe("BillingService.startCheckout", () => {
 
   it("does not persist when the customer id is unchanged", async () => {
     const users = fakeUsers({
-      "user-1": { id: "user-1", email: "alice@example.com", stripeCustomerId: "cus_existing" },
+      "user-1": {
+        id: "user-1",
+        name: "Alice",
+        email: "alice@example.com",
+        stripeCustomerId: "cus_existing",
+      },
     });
     const svc = makeBillingService({
       sessions: fakeSessions(SESSION),
@@ -138,7 +152,12 @@ describe("BillingService.openBillingPortal", () => {
     const svc = makeBillingService({
       sessions: fakeSessions(SESSION),
       users: fakeUsers({
-        "user-1": { id: "user-1", email: "alice@example.com", stripeCustomerId: null },
+        "user-1": {
+          id: "user-1",
+          name: "Alice",
+          email: "alice@example.com",
+          stripeCustomerId: null,
+        },
       }).repo,
       subscriptions: fakeSubscriptions({}),
       billing: fakeBilling({ url: "", customerId: "" }).gateway,
@@ -152,6 +171,7 @@ describe("BillingService.openBillingPortal", () => {
       users: fakeUsers({
         "user-1": {
           id: "user-1",
+          name: "Alice",
           email: "alice@example.com",
           stripeCustomerId: "cus_alice",
         },

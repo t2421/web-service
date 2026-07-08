@@ -21,6 +21,7 @@ export function makePrismaSubscriptionRepository(prisma: PrismaClient): Subscrip
       const row = await prisma.subscription.findUnique({ where: { userId } });
       if (!row) return null;
       const subscription: Subscription = {
+        stripeSubscriptionId: row.stripeSubscriptionId,
         status: STATUS_MAP[row.status],
         priceId: row.priceId,
         currentPeriodEnd: row.currentPeriodEnd,

@@ -31,5 +31,8 @@ export function makeMockBillingGateway(): BillingGateway {
       await setMockSubscription("free");
       return { url: "/billing?status=mock-portal" };
     },
+    async cancelSubscription() {
+      await setMockSubscription("free");
+    },
   };
 }

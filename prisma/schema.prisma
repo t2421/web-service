@@ -116,6 +116,17 @@ enum SubscriptionStatus {
   unpaid
 }
 
+// Stripe Webhook の冪等性担保。Stripe は同一イベントを再送しうるため、
+// 処理済みイベント ID を記録して二重処理(サブスクリプションの巻き戻し等)を防ぐ。
+model WebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@index([processedAt])
+  @@map("webhook_events")
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?  @map("user_id")

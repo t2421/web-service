@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { isMockModeEnabled } from "@/lib/mock-mode";
 import { stripe, STRIPE_PRICES } from "@/lib/stripe";
 
+import type { AuditLogger } from "@/server/ports/audit-logger";
 import type { AuthHandlers } from "@/server/ports/auth-handlers";
 import type { BillingGateway } from "@/server/ports/billing-gateway";
 import type { DbHealthCheck } from "@/server/ports/db-health";
@@ -13,6 +14,7 @@ import type { SignInGateway } from "@/server/ports/sign-in-gateway";
 import type { SubscriptionRepository } from "@/server/ports/subscription-repository";
 import type { UserRepository } from "@/server/ports/user-repository";
 
+import { makeAccountService, type AccountService } from "@/server/services/account-service";
 import { makeBillingService, type BillingService } from "@/server/services/billing-service";
 import { makeAuthService, type AuthService } from "@/server/services/auth-service";
 
@@ -21,6 +23,7 @@ import { makeNextAuthHandlers } from "@/server/adapters/nextauth/auth-handlers";
 import { makeNextAuthSessionGateway } from "@/server/adapters/nextauth/session-gateway";
 import { makeNextAuthSignInGateway } from "@/server/adapters/nextauth/sign-in-gateway";
 
+import { makePrismaAuditLogger } from "@/server/adapters/prisma/audit-logger";
 import { makePrismaAuthDbAdapter } from "@/server/adapters/prisma/auth-db-adapter";
 import { makePrismaDbHealthCheck } from "@/server/adapters/prisma/db-health";
 import { makePrismaSubscriptionRepository } from "@/server/adapters/prisma/subscription-repository";
@@ -29,6 +32,7 @@ import { makePrismaUserRepository } from "@/server/adapters/prisma/user-reposito
 import { makeStripeBillingGateway } from "@/server/adapters/stripe/billing-gateway";
 import { makeUpstashRateLimiter } from "@/server/adapters/upstash/rate-limiter";
 
+import { makeNoopAuditLogger } from "@/server/adapters/mock/audit-logger";
 import { makeMockAuthHandlers } from "@/server/adapters/mock/auth-handlers";
 import { makeMockBillingGateway } from "@/server/adapters/mock/billing-gateway";
 import { makeMockDbHealthCheck } from "@/server/adapters/mock/db-health";
@@ -51,9 +55,11 @@ export type Container = Readonly<{
   billingGateway: BillingGateway;
   emailLimiter: RateLimiter;
   oauthLimiter: RateLimiter;
+  audit: AuditLogger;
   // Use cases
   billingService: BillingService;
   authService: AuthService;
+  accountService: AccountService;
 }>;
 
 // The composition root. The ONLY place where:
@@ -79,7 +85,10 @@ function build(): Container {
 
   const sessions: SessionGateway = mock
     ? makeMockSessionGateway()
-    : makeNextAuthSessionGateway(() => nextAuthInstance!.auth());
+    : makeNextAuthSessionGateway({
+        load: () => nextAuthInstance!.auth(),
+        destroy: (options) => nextAuthInstance!.signOut(options),
+      });
 
   const signIn: SignInGateway = mock
     ? makeMockSignInGateway()
@@ -106,6 +115,8 @@ function build(): Container {
     ? makeNoopRateLimiter()
     : makeUpstashRateLimiter({ requests: 10, window: "15 m", prefix: "auth:oauth" });
 
+  const audit: AuditLogger = mock ? makeNoopAuditLogger() : makePrismaAuditLogger(prisma);
+
   return {
     sessions,
     signIn,
@@ -116,8 +127,16 @@ function build(): Container {
     billingGateway,
     emailLimiter,
     oauthLimiter,
+    audit,
     billingService: makeBillingService({ sessions, users, subscriptions, billing: billingGateway }),
     authService: makeAuthService({ signIn, emailLimiter, oauthLimiter }),
+    accountService: makeAccountService({
+      sessions,
+      users,
+      subscriptions,
+      billing: billingGateway,
+      audit,
+    }),
   };
 }
 

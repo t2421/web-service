@@ -11,6 +11,7 @@ export type SubscriptionStatus =
 export type Plan = "monthly" | "yearly";
 
 export type Subscription = Readonly<{
+  stripeSubscriptionId: string | null;
   status: SubscriptionStatus;
   priceId: string | null;
   currentPeriodEnd: Date | null;

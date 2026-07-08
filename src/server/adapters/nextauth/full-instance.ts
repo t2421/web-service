@@ -7,6 +7,7 @@ import WebAuthn from "next-auth/providers/webauthn";
 
 import "server-only";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
 import { sendMagicLinkEmail } from "@/lib/email";
 import { nextAuthEdgeConfig } from "@/server/adapters/nextauth/edge-config";
 
@@ -38,7 +39,7 @@ export function makeNextAuthInstance(adapter: Adapter) {
                 try {
                   await sendMagicLinkEmail({ to: identifier, url });
                 } catch (err) {
-                  console.error("[auth] sendVerificationRequest failed:", err);
+                  logger.error("sendVerificationRequest failed", { error: String(err) });
                   throw err;
                 }
               },

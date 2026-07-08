@@ -12,6 +12,7 @@ export function makeMockSubscriptionRepository(): SubscriptionRepository {
       const user = parseMockUser(store.get(MOCK_SESSION_COOKIE)?.value);
       if (!user || user.subscription !== "active") return null;
       const subscription: Subscription = {
+        stripeSubscriptionId: "sub_mock",
         status: "active",
         priceId: "price_mock_pro_monthly",
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

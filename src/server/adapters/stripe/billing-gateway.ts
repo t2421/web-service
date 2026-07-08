@@ -56,5 +56,9 @@ export function makeStripeBillingGateway(
       });
       return { url: portal.url };
     },
+
+    async cancelSubscription(subscriptionId) {
+      await requireStripe().subscriptions.cancel(subscriptionId);
+    },
   };
 }

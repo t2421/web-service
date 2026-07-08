@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { AuthError } from "next-auth";
 
+import { logger } from "@/lib/logger";
 import { container } from "@/server/container";
 import { AppError, RateLimitedError, UnauthorizedError } from "@/server/domain/errors";
 import { InvalidEmailError } from "@/server/services/auth-service";
@@ -37,7 +38,7 @@ function toResult(error: unknown): ActionResult {
   if (error instanceof AppError) {
     return { success: false, error: error.message };
   }
-  console.error("[auth-action]", error);
+  logger.error("auth action failed", { error: String(error) });
   return { success: false, error: "サーバーエラーが発生しました。しばらく後にお試しください。" };
 }
 

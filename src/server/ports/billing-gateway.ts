@@ -22,4 +22,6 @@ export type PortalInput = Readonly<{
 export interface BillingGateway {
   createCheckoutUrl(input: CheckoutInput): Promise<CheckoutResult>;
   createPortalUrl(input: PortalInput): Promise<{ url: string }>;
+  // 退会フローで使用。即時解約(日割りなし)を想定。
+  cancelSubscription(subscriptionId: string): Promise<void>;
 }
